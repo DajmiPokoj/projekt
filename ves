@@ -1,199 +1,201 @@
-def hex2dec(cislo):
-    vysledok = 0
-    for index in range(len(cislo)):
-        cifra = cislo[(index+1)*(-1)].upper()
-        if ord("A") <= ord(cifra) <= ord("F"):
-            cifra = ord(cifra) - 65 + 10
-        else:
-            cifra = int(cifra)
-        vysledok += cifra * 16 ** index
-    return vysledok
-
-
-def hexColor(color):
-    r = hex2dec(color[1:3])
-    g = hex2dec(color[3:5])
-    b = hex2dec(color[5:])
-    return (r, g, b)
-
-def boundary_check(x, y, im):
-    if x < 0: x = 0
-    if y < 0: y = 0
-    if x >= im.width: x = im.width - 1
-    if y >= im.height: y = im.height - 1
-    return x, y
-
-
-def line(im, A, B, color):
-    A = boundary_check(A[0], A[1], im)
-    B = boundary_check(B[0], B[1], im)
-    if A[0] == B[0]:
-        if A[1] > B[1]:
-            A, B = B, A
-        for y in range(A[1], B[1] + 1):
-            im.putpixel((A[0], y), color)
-    elif A[1] == B[1]:
-        if A[0] > B[0]:
-            A, B = B, A
-        for x in range(A[0], B[0] + 1):
-            im.putpixel((x, A[1]), color)
-    else:
-        if A[0] > B[0]:
-            A, B = B, A
-        dx = B[0] - A[0]
-        dy = B[1] - A[1]
-        if abs(dy/dx) > 1:
-            for y in range(min(A[1], B[1]), max(A[1], B[1]) + 1):
-                x = int((y - A[1] + (dy/dx) * A[0]) * (dx/dy))
-                x, y = boundary_check(x, y, im)
-                im.putpixel((x, y), color)
-        else:
-            for x in range(A[0], B[0] + 1):
-                y = int((B[1] - A[1])/(B[0] - A[0]) * (x - A[0]) + A[1])
-                x, y = boundary_check(x, y, im)
-                im.putpixel((x, y), color)
-
-
-def rect(im, A, B, color):
-    ax, ay = A
-    bx, by = B
-    line(im, A, (bx, ay), color)
-    line(im, (bx, ay), B, color)
-    line(im, B, (ax, by), color)
-    line(im, (ax, by), A, color)
-
-
-def filled_rect(im, A, B, color):
-    ax, ay = A
-    bx, by = B
-    for x in range(int(ax), int(bx) + 1):
-        for y in range(int(ay), int(by) + 1):
-            x, y = boundary_check(x, y, im)
-            im.putpixel((x, y), color)
-
-
-def circle(im, S, r, color):
-
-  for x in range(0, int(r/2**(1/2))+1):
-    y = int((r**2 - x**2)**(1/2))
-
-    im.putpixel((x + S[0],y + S[1]), color)
-    im.putpixel((y + S[0],x + S[1]), color)
-    im.putpixel((y + S[0],-x + S[1]), color)
-    im.putpixel((x + S[0],-y + S[1]), color)
-    im.putpixel((-x + S[0],-y + S[1]), color)
-    im.putpixel((-y + S[0],-x + S[1]), color)
-    im.putpixel((-y + S[0],x + S[1]), color)
-    im.putpixel((-x + S[0],y + S[1]), color)
-
-
-
-def filled_circle(im, S, r, color):
-
-  for x in range(0, int(r/2**(1/2))+1):
-    y = int((r**2 - x**2)**(1/2))
-
-    line(im, (x + S[0], y + S[1]), (x + S[0],-y + S[1]), color)
-    line(im, (y + S[0],x + S[1]), (y + S[0],-x + S[1]), color)
-    line(im, (-x + S[0],y + S[1]), (-x + S[0],-y + S[1]), color)
-    line(im, (-y + S[0],x + S[1]), (-y + S[0],-x + S[1]), color)
-
-def triangle(im, A, B, C, color):
-    line(im, A, B, color)
-    line(im, B, C, color)
-    line(im, C, A, color)
-
-
-def filled_triangle(im, A, B, C, color):
-    V = sorted([A, B, C], key=lambda point: point[1])
-    left = linePixels(V[0], V[1]) + linePixels(V[1], V[2])
-    right = linePixels(V[0], V[2])
-
-    Xmax = max(A[0], B[0], C[0])
-    Xmin = min(A[0], B[0], C[0])
-
-    for y in range(getY(V[0]), getY(V[2]) + 1):
-        x1 = Xmax
-        for X in left:
-            if X[1] == y and X[0] < x1:
-                x1 = X[0]
-        x2 = Xmin
-        for X in right:
-            if X[1] == y and X[0] > x2:
-                x2 = X[0]
-
-        if x2 < 0:
-            continue
-        if x2 > im.width:
-            x2 = im.width - 1
-        if x1 < 0:
-            x1 = 0
-
-        line(im, (x1, y), (x2, y), color)
-
-
-def linePixels(A, B):
-    pixels = []
-    if A[0] == B[0]:
-        if A[1] > B[1]:
-            A,B = B,A
-        for y in range(A[1], B[1] + 1):
-            pixels.append((A[0], y))
-    elif A[1] == B[1]:
-        if A[0] > B[0]:
-            A,B = B,A
-        for x in range(A[0], B[0] + 1):
-            pixels.append((x, A[1]))
-    else:
-        if A[0] > B[0]:
-            A,B = B,A
-        dx = B[0] - A[0]
-        dy = B[1] - A[1]
-        if abs(dy/dx) > 1:
-            for y in range(min(A[1], B[1]), max(A[1], B[1]) + 1):
-                x = int((y - A[1] + (dy/dx) * A[0]) * (dx/dy))
-                pixels.append((x, y))
-        else:
-            for x in range(min(A[0], B[0]), max(A[0], B[0]) + 1):
-                y = int((B[1] - A[1])/(B[0] - A[0]) * (x - A[0]) + A[1])
-                pixels.append((x, y))
-    return pixels
-
-
-def getY(point):
-    return point[1]
-
-
-
-while True:
-    vstup = input("zadaj súradnice: ") 
-    riadok = vstup.split(" ")
-
-    if not riadok or len(riadok) < 1:
-        continue
-
-    farba = hexColor(riadok[-1].strip())  
-    if riadok[0] == "VES":
-        width = int(riadok[1])  
-        height = int(riadok[2])  
-        obr = Image.new("RGB", (width, height), (255, 255, 255)) 
-    elif riadok[0] == "CLEAR":
-        obr = Image.new("RGB", (width, height), farba)  
-    elif riadok[0] == "CIRCLE":
-        circle(obr, (int(riadok[1]), int(riadok[2])), int(riadok[3]), farba)
-    elif riadok[0] == "FILL_CIRCLE":
-        filled_circle(obr, (int(riadok[1]), int(riadok[2])), int(riadok[3]), farba)
-    elif riadok[0] == "FILL_RECT":
-        filled_rect(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
-    elif riadok[0] == "RECT":
-        rect(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
-    elif riadok[0] == "LINE":
-        line(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
-    elif riadok[0] == "TRIANGLE":
-        triangle(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), (int(riadok[5]), int(riadok[6])), farba)
-    elif riadok[0] == "FILL_TRIANGLE":
-        filled_triangle(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), (int(riadok[5]), int(riadok[6])), farba)
-    else:
-        print("Neznámy príkaz.")
-if __name__ == '__main__':
-    app.run(debug=True)
+from PIL import Image, ImageDraw
+def render_ves():    
+    def hex2dec(cislo):
+            vysledok = 0
+            for index in range(len(cislo)):
+                cifra = cislo[(index+1)*(-1)].upper()
+                if ord("A") <= ord(cifra) <= ord("F"):
+                    cifra = ord(cifra) - 65 + 10
+                else:
+                    cifra = int(cifra)
+                vysledok += cifra * 16 ** index
+            return vysledok
+        
+        
+        def hexColor(color):
+            r = hex2dec(color[1:3])
+            g = hex2dec(color[3:5])
+            b = hex2dec(color[5:])
+            return (r, g, b)
+        
+        def boundary_check(x, y, im):
+            if x < 0: x = 0
+            if y < 0: y = 0
+            if x >= im.width: x = im.width - 1
+            if y >= im.height: y = im.height - 1
+            return x, y
+        
+        
+        def line(im, A, B, color):
+            A = boundary_check(A[0], A[1], im)
+            B = boundary_check(B[0], B[1], im)
+            if A[0] == B[0]:
+                if A[1] > B[1]:
+                    A, B = B, A
+                for y in range(A[1], B[1] + 1):
+                    im.putpixel((A[0], y), color)
+            elif A[1] == B[1]:
+                if A[0] > B[0]:
+                    A, B = B, A
+                for x in range(A[0], B[0] + 1):
+                    im.putpixel((x, A[1]), color)
+            else:
+                if A[0] > B[0]:
+                    A, B = B, A
+                dx = B[0] - A[0]
+                dy = B[1] - A[1]
+                if abs(dy/dx) > 1:
+                    for y in range(min(A[1], B[1]), max(A[1], B[1]) + 1):
+                        x = int((y - A[1] + (dy/dx) * A[0]) * (dx/dy))
+                        x, y = boundary_check(x, y, im)
+                        im.putpixel((x, y), color)
+                else:
+                    for x in range(A[0], B[0] + 1):
+                        y = int((B[1] - A[1])/(B[0] - A[0]) * (x - A[0]) + A[1])
+                        x, y = boundary_check(x, y, im)
+                        im.putpixel((x, y), color)
+        
+        
+        def rect(im, A, B, color):
+            ax, ay = A
+            bx, by = B
+            line(im, A, (bx, ay), color)
+            line(im, (bx, ay), B, color)
+            line(im, B, (ax, by), color)
+            line(im, (ax, by), A, color)
+        
+        
+        def filled_rect(im, A, B, color):
+            ax, ay = A
+            bx, by = B
+            for x in range(int(ax), int(bx) + 1):
+                for y in range(int(ay), int(by) + 1):
+                    x, y = boundary_check(x, y, im)
+                    im.putpixel((x, y), color)
+        
+        
+        def circle(im, S, r, color):
+        
+          for x in range(0, int(r/2**(1/2))+1):
+            y = int((r**2 - x**2)**(1/2))
+        
+            im.putpixel((x + S[0],y + S[1]), color)
+            im.putpixel((y + S[0],x + S[1]), color)
+            im.putpixel((y + S[0],-x + S[1]), color)
+            im.putpixel((x + S[0],-y + S[1]), color)
+            im.putpixel((-x + S[0],-y + S[1]), color)
+            im.putpixel((-y + S[0],-x + S[1]), color)
+            im.putpixel((-y + S[0],x + S[1]), color)
+            im.putpixel((-x + S[0],y + S[1]), color)
+        
+        
+        
+        def filled_circle(im, S, r, color):
+        
+          for x in range(0, int(r/2**(1/2))+1):
+            y = int((r**2 - x**2)**(1/2))
+        
+            line(im, (x + S[0], y + S[1]), (x + S[0],-y + S[1]), color)
+            line(im, (y + S[0],x + S[1]), (y + S[0],-x + S[1]), color)
+            line(im, (-x + S[0],y + S[1]), (-x + S[0],-y + S[1]), color)
+            line(im, (-y + S[0],x + S[1]), (-y + S[0],-x + S[1]), color)
+        
+        def triangle(im, A, B, C, color):
+            line(im, A, B, color)
+            line(im, B, C, color)
+            line(im, C, A, color)
+        
+        
+        def filled_triangle(im, A, B, C, color):
+            V = sorted([A, B, C], key=lambda point: point[1])
+            left = linePixels(V[0], V[1]) + linePixels(V[1], V[2])
+            right = linePixels(V[0], V[2])
+        
+            Xmax = max(A[0], B[0], C[0])
+            Xmin = min(A[0], B[0], C[0])
+        
+            for y in range(getY(V[0]), getY(V[2]) + 1):
+                x1 = Xmax
+                for X in left:
+                    if X[1] == y and X[0] < x1:
+                        x1 = X[0]
+                x2 = Xmin
+                for X in right:
+                    if X[1] == y and X[0] > x2:
+                        x2 = X[0]
+        
+                if x2 < 0:
+                    continue
+                if x2 > im.width:
+                    x2 = im.width - 1
+                if x1 < 0:
+                    x1 = 0
+        
+                line(im, (x1, y), (x2, y), color)
+        
+        
+        def linePixels(A, B):
+            pixels = []
+            if A[0] == B[0]:
+                if A[1] > B[1]:
+                    A,B = B,A
+                for y in range(A[1], B[1] + 1):
+                    pixels.append((A[0], y))
+            elif A[1] == B[1]:
+                if A[0] > B[0]:
+                    A,B = B,A
+                for x in range(A[0], B[0] + 1):
+                    pixels.append((x, A[1]))
+            else:
+                if A[0] > B[0]:
+                    A,B = B,A
+                dx = B[0] - A[0]
+                dy = B[1] - A[1]
+                if abs(dy/dx) > 1:
+                    for y in range(min(A[1], B[1]), max(A[1], B[1]) + 1):
+                        x = int((y - A[1] + (dy/dx) * A[0]) * (dx/dy))
+                        pixels.append((x, y))
+                else:
+                    for x in range(min(A[0], B[0]), max(A[0], B[0]) + 1):
+                        y = int((B[1] - A[1])/(B[0] - A[0]) * (x - A[0]) + A[1])
+                        pixels.append((x, y))
+            return pixels
+        
+        
+        def getY(point):
+            return point[1]
+        
+        
+        
+        while True:
+            vstup = input("zadaj súradnice: ") 
+            riadok = vstup.split(" ")
+        
+            if not riadok or len(riadok) < 1:
+                continue
+        
+            farba = hexColor(riadok[-1].strip())  
+            if riadok[0] == "VES":
+                width = int(riadok[1])  
+                height = int(riadok[2])  
+                obr = Image.new("RGB", (width, height), (255, 255, 255)) 
+            elif riadok[0] == "CLEAR":
+                obr = Image.new("RGB", (width, height), farba)  
+            elif riadok[0] == "CIRCLE":
+                circle(obr, (int(riadok[1]), int(riadok[2])), int(riadok[3]), farba)
+            elif riadok[0] == "FILL_CIRCLE":
+                filled_circle(obr, (int(riadok[1]), int(riadok[2])), int(riadok[3]), farba)
+            elif riadok[0] == "FILL_RECT":
+                filled_rect(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
+            elif riadok[0] == "RECT":
+                rect(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
+            elif riadok[0] == "LINE":
+                line(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), farba)
+            elif riadok[0] == "TRIANGLE":
+                triangle(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), (int(riadok[5]), int(riadok[6])), farba)
+            elif riadok[0] == "FILL_TRIANGLE":
+                filled_triangle(obr, (int(riadok[1]), int(riadok[2])), (int(riadok[3]), int(riadok[4])), (int(riadok[5]), int(riadok[6])), farba)
+            else:
+                print("Neznámy príkaz.")
+        if __name__ == '__main__':
+            app.run(debug=True)
