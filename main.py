@@ -32,3 +32,6 @@ def render():
   print(ves)
   img = render_ves() 
   return serve_pil_image(img) # vratime vyrenderovany obrazok ako jpg
+
+if __name__ == "__main__":
+  app.run(debug=True)
